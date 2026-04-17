@@ -463,6 +463,22 @@ export class AsanaClientWrapper {
     return response.data;
   }
 
+  async getTasksForSection(section_gid: string, opts: any = {}) {
+    const client = Asana.ApiClient.instance;
+    const pathParams = { section_gid };
+    const queryParams: any = {};
+    if (opts.opt_fields) queryParams.opt_fields = opts.opt_fields;
+    if (opts.limit) queryParams.limit = opts.limit;
+    if (opts.offset) queryParams.offset = opts.offset;
+    if (opts.completed_since) queryParams.completed_since = opts.completed_since;
+    const response = await client.callApi(
+      '/sections/{section_gid}/tasks', 'GET',
+      pathParams, queryParams, {}, {}, null,
+      ['personalAccessToken'], [], ['application/json; charset=UTF-8'], 'Blob'
+    );
+    return response.data;
+  }
+
   async getTasksForProject(projectId: string, opts: any = {}) {
     const response = await this.tasks.getTasksForProject(projectId, opts);
     return response.data;

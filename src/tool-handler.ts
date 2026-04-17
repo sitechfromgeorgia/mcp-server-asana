@@ -16,7 +16,8 @@ import {
   createSectionTool,
   updateSectionTool,
   deleteSectionTool,
-  addTaskToSectionTool
+  addTaskToSectionTool,
+  getTasksForSectionTool
 } from './tools/section-tools.js';
 import {
   getProjectStatusTool,
@@ -100,6 +101,7 @@ const all_tools: Tool[] = [
   updateSectionTool,
   deleteSectionTool,
   addTaskToSectionTool,
+  getTasksForSectionTool,
   updateProjectTool,
 ];
 
@@ -117,6 +119,7 @@ const READ_ONLY_TOOLS = [
   'asana_get_project_statuses',
   'asana_get_project_sections',
   'asana_get_tasks_for_project',
+  'asana_get_tasks_for_section',
   'asana_get_multiple_tasks_by_gid',
   'asana_get_tag',
   'asana_get_tags_for_task',
@@ -340,6 +343,14 @@ export function tool_handler(asanaClient: AsanaClientWrapper): (request: CallToo
         case "asana_get_tasks_for_project": {
           const { project_id, ...opts } = args;
           const response = await asanaClient.getTasksForProject(project_id, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        case "asana_get_tasks_for_section": {
+          const { section_gid, ...opts } = args;
+          const response = await asanaClient.getTasksForSection(section_gid, opts);
           return {
             content: [{ type: "text", text: JSON.stringify(response) }],
           };
