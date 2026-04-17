@@ -66,7 +66,7 @@ Another example:
         * sort_by (string): Sort by due_date, created_at, completed_at, likes, modified_at (default: modified_at)
         * sort_ascending (boolean): Sort in ascending order (default: false)
         * opt_fields (string): Comma-separated list of optional fields to include
-        * custom_fields (object): Object containing custom field filters
+        * custom_fields (object): Object containing custom field filters. Supports `{gid}` for exact value match (Text/Number/Enum) and `{gid}.is_set` (boolean) for presence check. **Requires paid Asana plan.** Example: `{"12345": "high", "67890.is_set": true}`
     * Returns: List of matching tasks
 4. `asana_get_task`
     * Get detailed information about a specific task
@@ -383,7 +383,17 @@ Another example:
         * limit (number): Results per page (1-100)
         * offset (string): Pagination offset token from a previous response
     * Returns: Array of task objects
-41. `asana_get_my_tasks`
+41. `asana_get_tasks_for_section`
+    * Get all tasks in a specific section. Most efficient way to get tasks from a section — works on ALL Asana plans including free (unlike search_tasks which requires premium).
+    * Required input:
+        * section_gid (string): The section GID to get tasks for
+    * Optional input:
+        * opt_fields (string): Comma-separated list of optional fields to include (e.g. 'name,completed,assignee,due_on,memberships.section.name')
+        * limit (number): Results per page (1-100)
+        * offset (string): Pagination offset token from a previous response
+        * completed_since (string): Only return tasks incomplete or completed since this time. Use '1900-01-01' to include ALL tasks (completed + incomplete). Default only returns incomplete tasks.
+    * Returns: Array of task objects
+42. `asana_get_my_tasks`
     * Get tasks from the authenticated user's 'My Tasks' list in a workspace
     * Required input:
         * workspace (string): The workspace GID to get My Tasks from

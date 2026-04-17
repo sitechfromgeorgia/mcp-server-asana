@@ -248,16 +248,15 @@ export const searchTasksTool: Tool = {
       },
       custom_fields: {
         type: "object",
-        description: `Object containing custom field filters. Keys should be in the format "{gid}.{operation}" where operation can be:
-- {gid}.is_set: Boolean - For all custom field types, check if value is set
-- {gid}.value: String|Number|String(enum_option_gid) - Direct value match for Text, Number or Enum fields
-- {gid}.starts_with: String - For Text fields only, check if value starts with string
-- {gid}.ends_with: String - For Text fields only, check if value ends with string
-- {gid}.contains: String - For Text fields only, check if value contains string
-- {gid}.less_than: Number - For Number fields only, check if value is less than number
-- {gid}.greater_than: Number - For Number fields only, check if value is greater than number
+        description: `Object containing custom field filters. Keys should be in the format "{gid}" for exact match or "{gid}.is_set" for presence check.
 
-Example: { "12345.value": "high", "67890.contains": "urgent" }`
+Supported operations:
+- {gid}: String|Number|String(enum_option_gid) - Exact value match for Text, Number, or Enum fields. For enum fields, use the enum option GID.
+- {gid}.is_set: Boolean - Check if the custom field has any value set (true) or is empty (false)
+
+NOTE: This endpoint (search_tasks) requires a paid Asana plan (Starter, Advanced, Enterprise, or Enterprise+). On the free plan, use asana_get_tasks_for_section or asana_get_tasks_for_project instead.
+
+Example: { "12345": "high", "67890.is_set": true }`
       }
     },
     required: ["workspace"]

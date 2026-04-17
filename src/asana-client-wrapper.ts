@@ -135,20 +135,14 @@ export class AsanaClientWrapper {
 
     // Handle custom fields if provided
     if (searchOpts.custom_fields) {
-      if ( typeof searchOpts.custom_fields == "string" ) {
-        try {
-          searchOpts.custom_fields = JSON.parse( searchOpts.custom_fields );
-        } catch ( err ) {
-          if (err instanceof Error) {
-            err.message = "custom_fields must be a JSON object : " + err.message;
-          }
-          throw err;
-        }
-      }
-      Object.entries(searchOpts.custom_fields).forEach(([key, value]) => {
+      const customFields = typeof searchOpts.custom_fields === "string"
+        ? JSON.parse(searchOpts.custom_fields)
+        : searchOpts.custom_fields;
+      Object.entries(customFields).forEach(([key, value]) => {
+        // Supports: {gid} (exact match) and {gid}.is_set (boolean check)
         searchParams[`custom_fields.${key}`] = value;
       });
-      delete searchParams.custom_fields; // Remove the custom_fields object since we've processed it
+      delete searchParams.custom_fields;
     }
 
     // Add optional parameters if provided
@@ -164,29 +158,7 @@ export class AsanaClientWrapper {
     if (opt_fields) searchParams.opt_fields = opt_fields;
 
     const response = await this.tasks.searchTasksForWorkspace(workspace, searchParams);
-
-    // Transform the response to simplify custom fields if present
-    const transformedData = response.data.map((task: any) => {
-      if (!task.custom_fields) return task;
-
-      return {
-        ...task,
-        custom_fields: task.custom_fields.reduce((acc: any, field: any) => {
-          const key = `${field.name} (${field.gid})`;
-          let value = field.display_value;
-
-          // For enum fields with a value, include the enum option GID
-          if (field.type === 'enum' && field.enum_value) {
-            value = `${field.display_value} (${field.enum_value.gid})`;
-          }
-
-          acc[key] = value;
-          return acc;
-        }, {})
-      };
-    });
-
-    return transformedData;
+    return response.data;
   }
 
   async getTask(taskId: string, opts: any = {}) {
@@ -474,7 +446,7 @@ export class AsanaClientWrapper {
     const response = await client.callApi(
       '/sections/{section_gid}/tasks', 'GET',
       pathParams, queryParams, {}, {}, null,
-      ['personalAccessToken'], [], ['application/json; charset=UTF-8'], 'Blob'
+      ['personalAccessToken'], [], ['application/json; charset=UTF-8'], 'String'
     );
     return response.data;
   }
