@@ -10,6 +10,9 @@ export class AsanaClientWrapper {
   private customFieldSettings: any;
   private sections: any;
   private userTaskLists: any;
+  private users: any;
+  private teams: any;
+  private attachments: any;
 
   constructor(token: string) {
     const client = Asana.ApiClient.instance;
@@ -25,6 +28,9 @@ export class AsanaClientWrapper {
     this.customFieldSettings = new Asana.CustomFieldSettingsApi();
     this.sections = new Asana.SectionsApi();
     this.userTaskLists = new Asana.UserTaskListsApi();
+    this.users = new Asana.UsersApi();
+    this.teams = new Asana.TeamsApi();
+    this.attachments = new Asana.AttachmentsApi();
   }
 
   async listWorkspaces(opts: any = {}) {
@@ -135,11 +141,17 @@ export class AsanaClientWrapper {
 
     // Handle custom fields if provided
     if (searchOpts.custom_fields) {
-      const customFields = typeof searchOpts.custom_fields === "string"
-        ? JSON.parse(searchOpts.custom_fields)
-        : searchOpts.custom_fields;
-      Object.entries(customFields).forEach(([key, value]) => {
-        // Supports: {gid} (exact match) and {gid}.is_set (boolean check)
+      if (typeof searchOpts.custom_fields === "string") {
+        try {
+          searchOpts.custom_fields = JSON.parse(searchOpts.custom_fields);
+        } catch (err) {
+          if (err instanceof Error) {
+            err.message = "custom_fields must be a JSON object : " + err.message;
+          }
+          throw err;
+        }
+      }
+      Object.entries(searchOpts.custom_fields).forEach(([key, value]) => {
         searchParams[`custom_fields.${key}`] = value;
       });
       delete searchParams.custom_fields;
@@ -158,7 +170,29 @@ export class AsanaClientWrapper {
     if (opt_fields) searchParams.opt_fields = opt_fields;
 
     const response = await this.tasks.searchTasksForWorkspace(workspace, searchParams);
-    return response.data;
+
+    // Transform the response to simplify custom fields if present
+    const transformedData = response.data.map((task: any) => {
+      if (!task.custom_fields) return task;
+
+      return {
+        ...task,
+        custom_fields: task.custom_fields.reduce((acc: any, field: any) => {
+          const key = `${field.name} (${field.gid})`;
+          let value = field.display_value;
+
+          // For enum fields with a value, include the enum option GID
+          if (field.type === 'enum' && field.enum_value) {
+            value = `${field.display_value} (${field.enum_value.gid})`;
+          }
+
+          acc[key] = value;
+          return acc;
+        }, {})
+      };
+    });
+
+    return transformedData;
   }
 
   async getTask(taskId: string, opts: any = {}) {
@@ -487,6 +521,55 @@ export class AsanaClientWrapper {
     const options = opts.opt_fields ? opts : {};
     const body = { data };
     const response = await this.projects.updateProject(body, projectId, options);
+    return response.data;
+  }
+
+  // ===== User Methods =====
+
+  async getUsersForWorkspace(workspaceGid: string, opts: any = {}) {
+    const response = await this.users.getUsersForWorkspace(workspaceGid, opts);
+    return response.data;
+  }
+
+  async getUser(userGid: string, opts: any = {}) {
+    const response = await this.users.getUser(userGid, opts);
+    return response.data;
+  }
+
+  // ===== Team Methods =====
+
+  async getTeamsForWorkspace(workspaceGid: string, opts: any = {}) {
+    const response = await this.teams.getTeamsForWorkspace(workspaceGid, opts);
+    return response.data;
+  }
+
+  async getProjectsForTeam(teamGid: string, opts: any = {}) {
+    const response = await this.projects.getProjectsForTeam(teamGid, opts);
+    return response.data;
+  }
+
+  // ===== Attachment Methods =====
+
+  async getAttachmentsForTask(taskGid: string, opts: any = {}) {
+    const response = await this.attachments.getAttachmentsForObject(taskGid, opts);
+    return response.data;
+  }
+
+  async getAttachment(attachmentGid: string, opts: any = {}) {
+    const response = await this.attachments.getAttachment(attachmentGid, opts);
+    return response.data;
+  }
+
+  // ===== Duplicate Task =====
+
+  async duplicateTask(taskGid: string, data: any = {}) {
+    const body = {
+      data: {
+        name: data.name || undefined,
+        include: data.include || ['notes', 'assignee', 'subtasks', 'projects', 'tags', 'followers', 'dates', 'dependencies', 'parent'],
+      }
+    };
+    const response = await this.tasks.duplicateTask(body, taskGid, {});
     return response.data;
   }
 }

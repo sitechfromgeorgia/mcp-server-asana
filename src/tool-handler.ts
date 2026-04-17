@@ -36,7 +36,8 @@ import {
   getMultipleTasksByGidTool,
   addProjectToTaskTool,
   removeProjectFromTaskTool,
-  deleteTaskTool
+  deleteTaskTool,
+  duplicateTaskTool
 } from './tools/task-tools.js';
 import {
   getTagTool,
@@ -58,6 +59,21 @@ import {
   getStoriesForTaskTool,
   createTaskStoryTool
 } from './tools/story-tools.js';
+import {
+  getUsersForWorkspaceTool,
+  getUserTool
+} from './tools/user-tools.js';
+import {
+  getTeamsForWorkspaceTool,
+  getProjectsForTeamTool
+} from './tools/team-tools.js';
+import {
+  getAttachmentsForTaskTool,
+  getAttachmentTool
+} from './tools/attachment-tools.js';
+import {
+  getCustomFieldsForProjectTool
+} from './tools/custom-field-tools.js';
 
 // List of all available tools
 const all_tools: Tool[] = [
@@ -103,6 +119,14 @@ const all_tools: Tool[] = [
   addTaskToSectionTool,
   getTasksForSectionTool,
   updateProjectTool,
+  getUsersForWorkspaceTool,
+  getUserTool,
+  getTeamsForWorkspaceTool,
+  getProjectsForTeamTool,
+  getAttachmentsForTaskTool,
+  getAttachmentTool,
+  getCustomFieldsForProjectTool,
+  duplicateTaskTool,
 ];
 
 // List of tools that only read Asana state
@@ -125,7 +149,14 @@ const READ_ONLY_TOOLS = [
   'asana_get_tags_for_task',
   'asana_get_tasks_for_tag',
   'asana_get_tags_for_workspace',
-  'asana_get_subtasks'
+  'asana_get_subtasks',
+  'asana_get_users_for_workspace',
+  'asana_get_user',
+  'asana_get_teams_for_workspace',
+  'asana_get_projects_for_team',
+  'asana_get_attachments_for_task',
+  'asana_get_attachment',
+  'asana_get_custom_fields_for_project'
 ];
 
 // Filter tools based on READ_ONLY_MODE
@@ -699,6 +730,75 @@ export function tool_handler(asanaClient: AsanaClientWrapper): (request: CallToo
             }
             throw error;
           }
+        }
+
+        // ===== User Tools =====
+        case "asana_get_users_for_workspace": {
+          const { workspace_gid, ...opts } = args;
+          const response = await asanaClient.getUsersForWorkspace(workspace_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        case "asana_get_user": {
+          const { user_gid, ...opts } = args;
+          const response = await asanaClient.getUser(user_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        // ===== Team Tools =====
+        case "asana_get_teams_for_workspace": {
+          const { workspace_gid, ...opts } = args;
+          const response = await asanaClient.getTeamsForWorkspace(workspace_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        case "asana_get_projects_for_team": {
+          const { team_gid, ...opts } = args;
+          const response = await asanaClient.getProjectsForTeam(team_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        // ===== Attachment Tools =====
+        case "asana_get_attachments_for_task": {
+          const { task_gid, ...opts } = args;
+          const response = await asanaClient.getAttachmentsForTask(task_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        case "asana_get_attachment": {
+          const { attachment_gid, ...opts } = args;
+          const response = await asanaClient.getAttachment(attachment_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        // ===== Custom Field Tools =====
+        case "asana_get_custom_fields_for_project": {
+          const { project_gid, ...opts } = args;
+          const response = await asanaClient.getProjectCustomFieldSettings(project_gid, opts);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
+        }
+
+        // ===== Duplicate Task =====
+        case "asana_duplicate_task": {
+          const { task_gid, ...data } = args;
+          const response = await asanaClient.duplicateTask(task_gid, data);
+          return {
+            content: [{ type: "text", text: JSON.stringify(response) }],
+          };
         }
 
         default:

@@ -555,3 +555,30 @@ export const deleteTaskTool: Tool = {
   }
 };
 
+export const duplicateTaskTool: Tool = {
+  name: "asana_duplicate_task",
+  description: "Duplicate an existing task. Creates a copy of the task with configurable fields to include. Returns a job object — use the 'new_task' field in the job result for the duplicated task GID.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      task_gid: {
+        type: "string",
+        description: "The task GID to duplicate"
+      },
+      name: {
+        type: "string",
+        description: "Optional new name for the duplicated task. If not provided, uses 'Copy of <original name>'"
+      },
+      include: {
+        type: "array",
+        items: {
+          type: "string",
+          enum: ["notes", "assignee", "subtasks", "attachments", "tags", "followers", "projects", "dates", "dependencies", "parent"]
+        },
+        description: "Array of fields to include in the duplicate. Defaults to all: ['notes', 'assignee', 'subtasks', 'projects', 'tags', 'followers', 'dates', 'dependencies', 'parent']"
+      }
+    },
+    required: ["task_gid"]
+  }
+};
+
